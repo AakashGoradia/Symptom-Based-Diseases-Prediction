@@ -2,8 +2,20 @@ from flask import Flask, request,jsonify
 import joblib
 import numpy as np
 from statistics import mode
+from flask_cors import CORS,  cross_origin
+
 
 app = Flask(__name__)
+CORS(app)
+
+# More Headers if CORS Error Persist
+# app.config["CORS_HEADERS"] = "Content-Type"
+# CORS(app, resources={r"/*": {"origins": "*"}})
+
+# @app.after_request
+# def add_cors_headers(response):
+#     response.headers['Access-Control-Allow-Origin'] = '*'
+#     return response
 
 # load the pickle files using joblib.load
 final_rf_model = joblib.load('model_rf.pkl')
@@ -66,6 +78,7 @@ def initializing():
     return data_dict
 
 @app.route('/process', methods=['POST','GET'])
+@cross_origin(origin='*', headers=['Content-Type','Authorization'])
 def process_data():
 
     symptoms = request.json['input']  
@@ -101,7 +114,7 @@ def process_data():
     svm_prediction = data_dict["predictions_classes"][final_svm_model.predict(input_data)[0]]
     
     # making final prediction by taking mode of all predictions
-    final_prediction = mode([rf_prediction, nb_prediction, svm_prediction])[0][0]
+    final_prediction = mode([rf_prediction, nb_prediction, svm_prediction])
     predictions = {
         "rf_model_prediction": rf_prediction,
         "naive_bayes_prediction": nb_prediction,
